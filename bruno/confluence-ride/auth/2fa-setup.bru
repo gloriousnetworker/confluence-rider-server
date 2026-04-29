@@ -1,0 +1,28 @@
+meta {
+  name: 2FA Setup
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/auth/2fa/setup
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.secret: isDefined
+  res.body.data.qrCodeUrl: isDefined
+}
+
+script:post-response {
+  if (res.body.data) {
+    bru.setVar("totpSecret", res.body.data.secret);
+  }
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 2FA Disable
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/auth/2fa/disable
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "code": "{{totpCode}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}

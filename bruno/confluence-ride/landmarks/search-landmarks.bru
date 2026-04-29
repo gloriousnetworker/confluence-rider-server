@@ -1,0 +1,16 @@
+meta {
+  name: Search Landmarks
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/landmarks/search?q=GTBank
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}

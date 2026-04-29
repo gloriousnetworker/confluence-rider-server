@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "name": "Confluence Ride API",
+  "type": "collection",
+  "ignore": ["node_modules"]
+}

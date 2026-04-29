@@ -1,0 +1,21 @@
+meta {
+  name: Get All Landmarks
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/landmarks
+  body: none
+  auth: none
+}
+
+params:query {
+  ~area: Lokoja
+  ~popular: true
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+}

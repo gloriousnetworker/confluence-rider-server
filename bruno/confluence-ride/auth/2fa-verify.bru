@@ -1,0 +1,27 @@
+meta {
+  name: 2FA Verify
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/auth/2fa/verify
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "code": "{{totpCode}}"
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.backupCodes: isDefined
+}
