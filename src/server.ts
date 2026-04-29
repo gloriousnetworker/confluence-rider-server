@@ -15,16 +15,15 @@ import { landmarkRoutes } from "./modules/landmarks/landmarks.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
 
 export async function createApp() {
+  const loggerConfig =
+    env.NODE_ENV === "test"
+      ? false
+      : env.NODE_ENV === "development"
+        ? { transport: { target: "pino-pretty", options: { colorize: true } } }
+        : true; // production: plain JSON logs
+
   const app = Fastify({
-    logger:
-      env.NODE_ENV !== "test"
-        ? {
-            transport: {
-              target: "pino-pretty",
-              options: { colorize: true },
-            },
-          }
-        : false,
+    logger: loggerConfig,
   }).withTypeProvider<ZodTypeProvider>();
 
   // Set Zod validators

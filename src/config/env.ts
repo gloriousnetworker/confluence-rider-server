@@ -11,8 +11,10 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32, "JWT_SECRET must be at least 32 characters"),
   JWT_ACCESS_EXPIRY: z.string().default("15m"),
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
-  CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  CORS_ORIGIN: z.string().default("*"),
   OTP_EXPIRY_MINUTES: z.coerce.number().default(5),
+  // Railway provides these automatically
+  RAILWAY_ENVIRONMENT: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
