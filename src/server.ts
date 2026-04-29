@@ -20,6 +20,7 @@ import { tripsRoutes } from "./modules/trips/trips.routes.js";
 import { notificationsRoutes } from "./modules/notifications/notifications.routes.js";
 import { promosRoutes } from "./modules/promos/promos.routes.js";
 import { referralsRoutes } from "./modules/referrals/referrals.routes.js";
+import { adminRoutes } from "./modules/admin/admin.routes.js";
 
 export async function createApp() {
   const loggerConfig =
@@ -93,6 +94,7 @@ export async function createApp() {
       await api.register(landmarkRoutes, { prefix: "/landmarks" });
       await api.register(promosRoutes, { prefix: "/promos" });
       await api.register(referralsRoutes, { prefix: "/referrals" });
+      await api.register(adminRoutes, { prefix: "/admin" });
     },
     { prefix: "/api" }
   );
