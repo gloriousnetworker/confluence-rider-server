@@ -16,6 +16,9 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "keywords": [],
   "author": "Mega-Tech Solutions LTD",
   "license": "ISC",
