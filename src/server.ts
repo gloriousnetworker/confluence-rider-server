@@ -13,6 +13,13 @@ import { env } from "./config/env.js";
 import { errorHandler } from "./middleware/error-handler.js";
 import { landmarkRoutes } from "./modules/landmarks/landmarks.routes.js";
 import { authRoutes } from "./modules/auth/auth.routes.js";
+import { usersRoutes } from "./modules/users/users.routes.js";
+import { bookingsRoutes } from "./modules/bookings/bookings.routes.js";
+import { walletRoutes } from "./modules/wallet/wallet.routes.js";
+import { tripsRoutes } from "./modules/trips/trips.routes.js";
+import { notificationsRoutes } from "./modules/notifications/notifications.routes.js";
+import { promosRoutes } from "./modules/promos/promos.routes.js";
+import { referralsRoutes } from "./modules/referrals/referrals.routes.js";
 
 export async function createApp() {
   const loggerConfig =
@@ -78,7 +85,14 @@ export async function createApp() {
   await app.register(
     async (api) => {
       await api.register(authRoutes, { prefix: "/auth" });
+      await api.register(usersRoutes, { prefix: "/users" });
+      await api.register(bookingsRoutes, { prefix: "/bookings" });
+      await api.register(walletRoutes, { prefix: "/wallet" });
+      await api.register(tripsRoutes, { prefix: "/trips" });
+      await api.register(notificationsRoutes, { prefix: "/notifications" });
       await api.register(landmarkRoutes, { prefix: "/landmarks" });
+      await api.register(promosRoutes, { prefix: "/promos" });
+      await api.register(referralsRoutes, { prefix: "/referrals" });
     },
     { prefix: "/api" }
   );
