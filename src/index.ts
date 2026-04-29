@@ -1,21 +1,23 @@
 import { createApp } from "./server.js";
 import { env } from "./config/env.js";
 import { sql } from "./config/database.js";
+import { pushSchema } from "./db/migrate.js";
 
 async function main() {
-  // Test DB connection on startup
+  // 1. Test DB connection
   try {
-    const result = await sql`SELECT 1 as ok`;
+    await sql`SELECT 1 as ok`;
     console.log("Database connected successfully");
   } catch (err) {
     console.error("Database connection failed:", err);
-    console.error("DATABASE_URL starts with:", env.DATABASE_URL.substring(0, 30) + "...");
     process.exit(1);
   }
 
-  const app = await createApp();
+  // 2. Push schema (create/update tables)
+  await pushSchema();
 
-  // Railway injects PORT — use it, fallback to env config
+  // 3. Start server
+  const app = await createApp();
   const port = parseInt(process.env.PORT || String(env.PORT), 10);
 
   try {
