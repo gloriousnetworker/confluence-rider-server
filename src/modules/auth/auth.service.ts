@@ -7,6 +7,7 @@ import { AppError } from "../../middleware/error-handler.js";
 import { normalizePhone, isValidPhone } from "../../utils/phone.js";
 import { env } from "../../config/env.js";
 import { sendOtpSms } from "../../services/sms.js";
+import { sendWelcomeEmail, sendPasswordResetEmail } from "../../services/email.js";
 import type {
   RegisterInput,
   VerifyOtpInput,
@@ -218,6 +219,11 @@ export async function register(input: RegisterInput) {
   // Generate OTP
   const otp = await createOtp(phone);
 
+  // Send welcome email (non-blocking)
+  if (input.email) {
+    sendWelcomeEmail(input.email, input.name).catch(() => {});
+  }
+
   return {
     userId: user.id,
     phone: user.phone,
@@ -403,6 +409,11 @@ export async function forgotPassword(input: ForgotPasswordInput) {
   }
 
   const otp = await createOtp(phone);
+
+  // Send password reset email if user has email (non-blocking)
+  if (user.email) {
+    sendPasswordResetEmail(user.email, user.name, otp).catch(() => {});
+  }
 
   return {
     message: `If this phone is registered, an OTP has been sent to ${phone}`,

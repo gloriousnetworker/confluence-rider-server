@@ -7,6 +7,7 @@ import { assertTransition, isTerminalStatus } from "../../utils/state-machine.js
 import type { CreateBookingInput, AcceptDriverInput, RateBookingInput } from "./bookings.schema.js";
 import type { RideType, BookingStatus } from "../../types/index.js";
 import { emitBookingStatusChange, emitDriverMatched, emitSosAlert, emitNotification } from "../../services/socket.js";
+import { sendTripReceiptEmail } from "../../services/email.js";
 
 const RIDE_TO_VEHICLE: Record<RideType, string[]> = {
   bike: ["bike"],
@@ -297,6 +298,30 @@ export async function completeBooking(bookingId: string, userId: string) {
 
   emitBookingStatusChange(bookingId, "completed", { fare: result.finalFare });
   emitNotification(userId, { type: "trip", title: "Trip Completed", description: `Your ride to ${booking.destination} is complete.` });
+
+  // Send receipt email (non-blocking)
+  const [riderForEmail] = await db
+    .select({ email: schema.users.email, name: schema.users.name })
+    .from(schema.users)
+    .where(eq(schema.users.id, userId))
+    .limit(1);
+
+  if (riderForEmail?.email) {
+    const driverName = booking.driverId
+      ? (await db.select({ name: schema.drivers.name }).from(schema.drivers).where(eq(schema.drivers.id, booking.driverId)).limit(1))[0]?.name || "Driver"
+      : "Driver";
+
+    sendTripReceiptEmail(riderForEmail.email, {
+      name: riderForEmail.name,
+      pickup: booking.pickup,
+      destination: booking.destination,
+      rideType: booking.rideType,
+      fare,
+      driverName,
+      date: new Date().toLocaleDateString("en-NG", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+      bookingId,
+    }).catch(() => {});
+  }
 
   return result;
 }

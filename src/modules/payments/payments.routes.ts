@@ -8,6 +8,7 @@ import { authenticate } from "../../middleware/authenticate.js";
 import { successResponse } from "../../utils/api-response.js";
 import { AppError } from "../../middleware/error-handler.js";
 import { env } from "../../config/env.js";
+import { sendTopupConfirmationEmail } from "../../services/email.js";
 import {
   initializeTransaction,
   verifyTransaction,
@@ -160,6 +161,19 @@ export const paymentsRoutes: FastifyPluginAsync = async (app) => {
 
         return { balance: newBalance, alreadyCredited: false };
       });
+
+      // Send topup confirmation email (non-blocking)
+      if (!result.alreadyCredited) {
+        const [userForEmail] = await db
+          .select({ email: schema.users.email, name: schema.users.name })
+          .from(schema.users)
+          .where(eq(schema.users.id, userId))
+          .limit(1);
+
+        if (userForEmail?.email) {
+          sendTopupConfirmationEmail(userForEmail.email, userForEmail.name, txn.amount, result.balance).catch(() => {});
+        }
+      }
 
       return successResponse({
         message: result.alreadyCredited ? "Payment already credited" : "Payment successful! Wallet credited.",

@@ -23,6 +23,9 @@ const envSchema = z.object({
   // Paystack
   PAYSTACK_SECRET_KEY: z.string().optional(),
   PAYSTACK_PUBLIC_KEY: z.string().optional(),
+  // Resend (email)
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("Confluence Ride <onboarding@resend.dev>"),
   // Railway provides these automatically
   RAILWAY_ENVIRONMENT: z.string().optional(),
 });
