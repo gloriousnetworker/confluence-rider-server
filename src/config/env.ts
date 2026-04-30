@@ -13,6 +13,9 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRY: z.string().default("7d"),
   CORS_ORIGIN: z.string().default("*"),
   OTP_EXPIRY_MINUTES: z.coerce.number().default(5),
+  // Termii SMS
+  TERMII_API_KEY: z.string().optional(),
+  TERMII_SENDER_ID: z.string().default("N-Alert"),
   // Railway provides these automatically
   RAILWAY_ENVIRONMENT: z.string().optional(),
 });

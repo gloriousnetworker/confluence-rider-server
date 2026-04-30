@@ -6,6 +6,7 @@ import * as schema from "../../db/schema/index.js";
 import { AppError } from "../../middleware/error-handler.js";
 import { normalizePhone, isValidPhone } from "../../utils/phone.js";
 import { env } from "../../config/env.js";
+import { sendOtpSms } from "../../services/sms.js";
 import type {
   RegisterInput,
   VerifyOtpInput,
@@ -34,9 +35,15 @@ async function createOtp(phone: string): Promise<string> {
     expiresAt,
   });
 
-  // In dev, log the OTP. In prod, send via SMS (Termii/Africa's Talking).
-  if (env.NODE_ENV === "development") {
-    console.log(`[DEV OTP] ${phone}: ${code}`);
+  // Send OTP via SMS (Termii). Falls back to console log if no API key.
+  const smsResult = await sendOtpSms(phone, code);
+  if (!smsResult.success) {
+    console.warn(`[OTP] SMS delivery failed for ${phone}: ${smsResult.message}`);
+  }
+
+  // Always log in dev for testing convenience
+  if (env.NODE_ENV !== "production") {
+    console.log(`[OTP] ${phone}: ${code}`);
   }
 
   return code;
