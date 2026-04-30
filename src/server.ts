@@ -24,6 +24,7 @@ import { referralsRoutes } from "./modules/referrals/referrals.routes.js";
 import { adminRoutes } from "./modules/admin/admin.routes.js";
 import { uploadRoutes } from "./modules/upload/upload.routes.js";
 import { paymentsRoutes } from "./modules/payments/payments.routes.js";
+import { pushRoutes } from "./modules/notifications/push.routes.js";
 
 export async function createApp() {
   const loggerConfig =
@@ -104,6 +105,7 @@ export async function createApp() {
       await api.register(adminRoutes, { prefix: "/admin" });
       await api.register(uploadRoutes, { prefix: "/upload" });
       await api.register(paymentsRoutes, { prefix: "/payments" });
+      await api.register(pushRoutes, { prefix: "/push" });
     },
     { prefix: "/api" }
   );

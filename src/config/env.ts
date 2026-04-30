@@ -26,6 +26,10 @@ const envSchema = z.object({
   // Resend (email)
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("Confluence Ride <onboarding@resend.dev>"),
+  // Firebase
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
   // Railway provides these automatically
   RAILWAY_ENVIRONMENT: z.string().optional(),
 });
