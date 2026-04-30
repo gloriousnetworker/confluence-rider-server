@@ -18,3 +18,4 @@ export * from "./refresh-tokens.js";
 export * from "./password-reset-tokens.js";
 export * from "./sos-alerts.js";
 export * from "./fcm-tokens.js";
+export * from "./shared-rides.js";
