@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import fastifyJwt from "@fastify/jwt";
+import multipart from "@fastify/multipart";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import {
@@ -21,6 +22,7 @@ import { notificationsRoutes } from "./modules/notifications/notifications.route
 import { promosRoutes } from "./modules/promos/promos.routes.js";
 import { referralsRoutes } from "./modules/referrals/referrals.routes.js";
 import { adminRoutes } from "./modules/admin/admin.routes.js";
+import { uploadRoutes } from "./modules/upload/upload.routes.js";
 
 export async function createApp() {
   const loggerConfig =
@@ -43,6 +45,10 @@ export async function createApp() {
 
   // Plugins
   await app.register(cors, { origin: env.CORS_ORIGIN });
+
+  await app.register(multipart, {
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  });
 
   await app.register(rateLimit, {
     max: 100,
@@ -95,6 +101,7 @@ export async function createApp() {
       await api.register(promosRoutes, { prefix: "/promos" });
       await api.register(referralsRoutes, { prefix: "/referrals" });
       await api.register(adminRoutes, { prefix: "/admin" });
+      await api.register(uploadRoutes, { prefix: "/upload" });
     },
     { prefix: "/api" }
   );

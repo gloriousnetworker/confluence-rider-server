@@ -16,6 +16,10 @@ const envSchema = z.object({
   // Termii SMS
   TERMII_API_KEY: z.string().optional(),
   TERMII_SENDER_ID: z.string().default("N-Alert"),
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
   // Railway provides these automatically
   RAILWAY_ENVIRONMENT: z.string().optional(),
 });

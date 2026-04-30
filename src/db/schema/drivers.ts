@@ -38,6 +38,10 @@ export const drivers = pgTable("drivers", {
   vehicleModel: varchar("vehicle_model", { length: 100 }),
   vehicleColor: varchar("vehicle_color", { length: 30 }),
   plateNumber: varchar("plate_number", { length: 20 }),
+  // KYC document URLs (Cloudinary)
+  licensePhotoUrl: varchar("license_photo_url", { length: 500 }),
+  vehiclePhotoUrl: varchar("vehicle_photo_url", { length: 500 }),
+  profilePhotoUrl: varchar("profile_photo_url", { length: 500 }),
   verificationStatus: verificationStatusEnum("verification_status")
     .default("pending")
     .notNull(),
