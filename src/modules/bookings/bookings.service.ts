@@ -6,6 +6,7 @@ import { calculateFare, isPeakHour } from "../../utils/fare.js";
 import { assertTransition, isTerminalStatus } from "../../utils/state-machine.js";
 import type { CreateBookingInput, AcceptDriverInput, RateBookingInput } from "./bookings.schema.js";
 import type { RideType, BookingStatus } from "../../types/index.js";
+import { emitBookingStatusChange, emitDriverMatched, emitSosAlert, emitNotification } from "../../services/socket.js";
 
 const RIDE_TO_VEHICLE: Record<RideType, string[]> = {
   bike: ["bike"],
@@ -192,6 +193,10 @@ export async function acceptDriver(bookingId: string, userId: string, input: Acc
     return [b];
   });
 
+  // Real-time: notify rider that driver was matched
+  emitBookingStatusChange(bookingId, "accepted", { driverId: input.driverId, agreedFare: input.agreedFare });
+  emitDriverMatched(bookingId, { id: driver.id, name: driver.name, rating: driver.rating, zone: driver.zone });
+
   return updated;
 }
 
@@ -215,6 +220,8 @@ export async function updateStatus(bookingId: string, userId: string, newStatus:
     .set(updates)
     .where(eq(schema.bookings.id, bookingId))
     .returning();
+
+  emitBookingStatusChange(bookingId, newStatus);
 
   return updated;
 }
@@ -288,6 +295,9 @@ export async function completeBooking(bookingId: string, userId: string) {
     return completed;
   });
 
+  emitBookingStatusChange(bookingId, "completed", { fare: result.finalFare });
+  emitNotification(userId, { type: "trip", title: "Trip Completed", description: `Your ride to ${booking.destination} is complete.` });
+
   return result;
 }
 
@@ -327,6 +337,8 @@ export async function cancelBooking(bookingId: string, userId: string, reason?: 
 
     return [b];
   });
+
+  emitBookingStatusChange(bookingId, "cancelled", { cancelledBy: "rider", reason });
 
   return updated;
 }
@@ -425,6 +437,8 @@ export async function activateSos(bookingId: string, userId: string) {
     title: "SOS Activated",
     description: "Emergency alert has been sent. Help is on the way.",
   });
+
+  emitSosAlert(bookingId, { userId, status: "active" });
 
   return alert;
 }
