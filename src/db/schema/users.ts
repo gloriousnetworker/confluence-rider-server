@@ -38,6 +38,8 @@ export const users = pgTable("users", {
   avatarUrl: varchar("avatar_url", { length: 500 }),
   isPhoneVerified: boolean("is_phone_verified").default(false).notNull(),
   is2faEnabled: boolean("is_2fa_enabled").default(false).notNull(),
+  isSuspended: boolean("is_suspended").default(false).notNull(),
+  isBanned: boolean("is_banned").default(false).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

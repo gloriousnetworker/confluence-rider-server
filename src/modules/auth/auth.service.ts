@@ -294,6 +294,14 @@ export async function login(
     throw new AppError(401, "UNAUTHORIZED", "Invalid phone number or password");
   }
 
+  // Check if user is banned or suspended
+  if ((user as any).isBanned) {
+    throw new AppError(403, "ACCOUNT_BANNED", "Your account has been banned. Contact support.");
+  }
+  if ((user as any).isSuspended) {
+    throw new AppError(403, "ACCOUNT_SUSPENDED", "Your account is temporarily suspended. Contact support.");
+  }
+
   const passwordValid = await bcrypt.compare(input.password, user.passwordHash);
   if (!passwordValid) {
     throw new AppError(401, "UNAUTHORIZED", "Invalid phone number or password");

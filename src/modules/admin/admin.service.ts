@@ -171,3 +171,64 @@ export async function getAnalytics() {
     gmv: Number(gmvResult.total),
   };
 }
+
+// ─── Promo CRUD ───
+export async function listPromos() {
+  return db.select().from(schema.promoCodes).orderBy(desc(schema.promoCodes.createdAt));
+}
+
+export async function createPromo(input: { code: string; discountPercent: number; expiresAt: string; usageLimit?: number }) {
+  const [existing] = await db.select().from(schema.promoCodes).where(eq(schema.promoCodes.code, input.code)).limit(1);
+  if (existing) throw new AppError(409, "CONFLICT", "Promo code already exists");
+
+  const [promo] = await db.insert(schema.promoCodes).values({
+    code: input.code,
+    discountPercent: input.discountPercent,
+    expiresAt: new Date(input.expiresAt),
+    usageLimit: input.usageLimit,
+    isActive: true,
+  }).returning();
+
+  return promo;
+}
+
+export async function updatePromo(id: string, input: { discountPercent?: number; isActive?: boolean; expiresAt?: string; usageLimit?: number | null }) {
+  const updates: Record<string, any> = {};
+  if (input.discountPercent !== undefined) updates.discountPercent = input.discountPercent;
+  if (input.isActive !== undefined) updates.isActive = input.isActive;
+  if (input.expiresAt !== undefined) updates.expiresAt = new Date(input.expiresAt);
+  if (input.usageLimit !== undefined) updates.usageLimit = input.usageLimit;
+
+  const [updated] = await db.update(schema.promoCodes).set(updates).where(eq(schema.promoCodes.id, id)).returning();
+  if (!updated) throw new AppError(404, "NOT_FOUND", "Promo not found");
+  return updated;
+}
+
+export async function deletePromo(id: string) {
+  const [deleted] = await db.delete(schema.promoCodes).where(eq(schema.promoCodes.id, id)).returning();
+  if (!deleted) throw new AppError(404, "NOT_FOUND", "Promo not found");
+  return { message: "Promo deleted" };
+}
+
+// ─── User Ban/Suspend ───
+export async function userAction(userId: string, action: string) {
+  const [user] = await db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  if (!user) throw new AppError(404, "NOT_FOUND", "User not found");
+
+  const updates: Record<string, any> = { updatedAt: new Date() };
+  switch (action) {
+    case "suspend": updates.isSuspended = true; break;
+    case "unsuspend": updates.isSuspended = false; break;
+    case "ban": updates.isBanned = true; break;
+    case "unban": updates.isBanned = false; break;
+  }
+
+  const [updated] = await db.update(schema.users).set(updates).where(eq(schema.users.id, userId)).returning({
+    id: schema.users.id,
+    name: schema.users.name,
+    isSuspended: schema.users.isSuspended,
+    isBanned: schema.users.isBanned,
+  });
+
+  return updated;
+}
