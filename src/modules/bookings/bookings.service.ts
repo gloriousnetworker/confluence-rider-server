@@ -326,6 +326,12 @@ export async function completeBooking(bookingId: string, userId: string) {
   return result;
 }
 
+// Cancellation fee: charged if driver was already accepted/arriving/ontrip
+const CANCELLATION_FEE = 100; // ₦100
+
+// Statuses that incur a cancellation fee (driver already committed)
+const FEE_STATUSES: BookingStatus[] = ["accepted", "arriving", "ontrip"];
+
 export async function cancelBooking(bookingId: string, userId: string, reason?: string) {
   const [booking] = await db
     .select()
@@ -339,6 +345,9 @@ export async function cancelBooking(bookingId: string, userId: string, reason?: 
   if (isTerminalStatus(booking.status as BookingStatus)) {
     throw new AppError(422, "INVALID_STATE_TRANSITION", `Cannot cancel a ${booking.status} booking`);
   }
+
+  const shouldChargeFee = FEE_STATUSES.includes(booking.status as BookingStatus);
+  let cancellationFee = 0;
 
   const [updated] = await db.transaction(async (tx) => {
     const [b] = await tx
@@ -360,12 +369,49 @@ export async function cancelBooking(bookingId: string, userId: string, reason?: 
         .where(eq(schema.drivers.id, booking.driverId));
     }
 
+    // Charge cancellation fee if driver was already committed
+    if (shouldChargeFee) {
+      const [wallet] = await tx
+        .select()
+        .from(schema.wallets)
+        .where(eq(schema.wallets.userId, userId))
+        .limit(1);
+
+      if (wallet && wallet.balance >= CANCELLATION_FEE) {
+        cancellationFee = CANCELLATION_FEE;
+
+        await tx
+          .update(schema.wallets)
+          .set({ balance: wallet.balance - CANCELLATION_FEE, updatedAt: new Date() })
+          .where(eq(schema.wallets.id, wallet.id));
+
+        await tx.insert(schema.transactions).values({
+          walletId: wallet.id,
+          userId,
+          type: "debit",
+          amount: CANCELLATION_FEE,
+          description: `Cancellation fee — ${booking.pickup} to ${booking.destination}`,
+          bookingId,
+        });
+      }
+
+      // Create notification about the fee
+      await tx.insert(schema.notifications).values({
+        userId,
+        type: "trip",
+        title: "Ride Cancelled",
+        description: cancellationFee > 0
+          ? `Your ride was cancelled. A ₦${CANCELLATION_FEE} cancellation fee has been charged.`
+          : `Your ride was cancelled.`,
+      });
+    }
+
     return [b];
   });
 
-  emitBookingStatusChange(bookingId, "cancelled", { cancelledBy: "rider", reason });
+  emitBookingStatusChange(bookingId, "cancelled", { cancelledBy: "rider", reason, cancellationFee });
 
-  return updated;
+  return { ...updated, cancellationFee };
 }
 
 export async function rateBooking(bookingId: string, userId: string, input: RateBookingInput) {
