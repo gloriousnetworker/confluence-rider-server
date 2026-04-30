@@ -27,6 +27,7 @@ import { paymentsRoutes } from "./modules/payments/payments.routes.js";
 import { pushRoutes } from "./modules/notifications/push.routes.js";
 import { driversRoutes } from "./modules/drivers/drivers.routes.js";
 import { sharedRidesRoutes } from "./modules/shared-rides/shared-rides.routes.js";
+import { shuttleRoutes as shuttleRoutesModule } from "./modules/shuttles/shuttles.routes.js";
 
 export async function createApp() {
   const loggerConfig =
@@ -110,6 +111,7 @@ export async function createApp() {
       await api.register(pushRoutes, { prefix: "/push" });
       await api.register(driversRoutes, { prefix: "/drivers" });
       await api.register(sharedRidesRoutes, { prefix: "/shared-rides" });
+      await api.register(shuttleRoutesModule, { prefix: "/shuttles" });
     },
     { prefix: "/api" }
   );

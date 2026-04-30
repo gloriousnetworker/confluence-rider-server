@@ -198,6 +198,31 @@ async function seed() {
     .onConflictDoNothing();
   console.log("  ✓ Seeded promo code: CONFLUENCE50 (50% off)");
 
+  // 6. Seed shuttle routes + schedules
+  const shuttleRoutesData = [
+    { name: "KSU Express", origin: "Lokoja", destination: "Kogi State University, Anyigba", stops: "Ganaja Junction,Anyigba Market", fare: 800, regularFare: 1200, capacity: 20 },
+    { name: "FPI Direct", origin: "Lokoja", destination: "Federal Polytechnic Idah", stops: "Ganaja Junction,Idah Junction", fare: 700, regularFare: 1000, capacity: 18 },
+    { name: "Okene Campus Link", origin: "Okene", destination: "Kogi State University, Anyigba", stops: "Crusher Junction,Okene Motor Park", fare: 600, regularFare: 900, capacity: 15 },
+    { name: "Kabba Student Shuttle", origin: "Kabba", destination: "Kogi State University, Anyigba", stops: "Kabba Main Market", fare: 900, regularFare: 1400, capacity: 18 },
+  ];
+
+  for (const route of shuttleRoutesData) {
+    const [r] = await db.insert(schema.shuttleRoutes).values(route).onConflictDoNothing().returning();
+    if (r) {
+      // Add schedules (weekdays at 7am and 4pm)
+      const days = ["monday", "tuesday", "wednesday", "thursday", "friday"] as const;
+      for (const day of days) {
+        await db.insert(schema.shuttleSchedules).values([
+          { routeId: r.id, day, departureTime: "07:00" },
+          { routeId: r.id, day, departureTime: "16:00" },
+        ]).onConflictDoNothing();
+      }
+      // Saturday morning only
+      await db.insert(schema.shuttleSchedules).values({ routeId: r.id, day: "saturday", departureTime: "08:00" }).onConflictDoNothing();
+      console.log(`  ✓ Seeded shuttle: ${route.name}`);
+    }
+  }
+
   await sql.end();
   console.log("\n✅ Seed complete!");
   console.log("\nTest credentials:");
