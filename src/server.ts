@@ -51,7 +51,12 @@ export async function createApp() {
   app.setErrorHandler(errorHandler);
 
   // Plugins
-  await app.register(cors, { origin: env.CORS_ORIGIN });
+  await app.register(cors, {
+    origin: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  });
 
   await app.register(multipart, {
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
