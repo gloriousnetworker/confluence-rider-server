@@ -28,8 +28,7 @@ export const payments = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     bookingId: uuid("booking_id")
-      .references(() => bookings.id)
-      .notNull(),
+      .references(() => bookings.id),
     amount: integer("amount").notNull(),
     method: paymentMethodEnum("method").notNull(),
     status: paymentStatusEnum("status").default("pending").notNull(),
