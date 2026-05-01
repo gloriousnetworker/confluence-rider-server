@@ -20,3 +20,4 @@ export * from "./sos-alerts.js";
 export * from "./fcm-tokens.js";
 export * from "./shared-rides.js";
 export * from "./shuttles.js";
+export * from "./chat.js";

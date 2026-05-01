@@ -28,6 +28,15 @@ export function initSocketIO(httpServer: HttpServer): SocketIOServer {
       socket.leave(`booking:${bookingId}`);
     });
 
+    // Chat messages via socket (real-time relay)
+    socket.on("chat-send", (data: { bookingId: string; message: string; senderName: string }) => {
+      io?.to(`booking:${data.bookingId}`).emit("chat-message", {
+        ...data,
+        senderId: socket.id,
+        createdAt: new Date().toISOString(),
+      });
+    });
+
     // Driver sends location updates
     socket.on("driver-location", (data: { bookingId: string; lat: number; lng: number }) => {
       // Broadcast to everyone in the booking room (rider sees driver move)
