@@ -6,6 +6,7 @@ import {
   userParamsSchema, userActionSchema,
 } from "./admin.schema.js";
 import * as adminService from "./admin.service.js";
+import * as settingsService from "./settings.service.js";
 import { successResponse } from "../../utils/api-response.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { requireRole } from "../../middleware/require-role.js";
@@ -98,6 +99,23 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   }, async () => {
     const { getDemandHeatmap } = await import("../../services/dispatch.js");
     const data = await getDemandHeatmap();
+    return successResponse(data);
+  });
+
+  // ─── Platform Settings ───
+  typedApp.get("/settings", {
+    schema: { tags: ["Admin"], summary: "Get all platform settings" },
+  }, async () => {
+    const data = await settingsService.getAllSettings();
+    return successResponse(data);
+  });
+
+  typedApp.put("/settings/:key", {
+    schema: { tags: ["Admin"], summary: "Update a platform setting" },
+  }, async (request: any) => {
+    const { key } = request.params;
+    const { value } = request.body as any;
+    const data = await settingsService.updateSetting(key, String(value));
     return successResponse(data);
   });
 };

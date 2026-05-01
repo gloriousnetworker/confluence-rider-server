@@ -18,15 +18,18 @@ const RIDE_TO_VEHICLE: Record<RideType, string[]> = {
   campus: ["keke", "car"],
 };
 
-// Default distance for MVP (no real geocoding yet)
-const DEFAULT_DISTANCE_KM = 8.2;
+// Default distance if not provided by frontend
+const DEFAULT_DISTANCE_KM = 5;
 
-export async function createBooking(riderId: string, input: CreateBookingInput) {
-  const fare = calculateFare({
-    rideType: input.rideType,
-    distanceKm: DEFAULT_DISTANCE_KM,
-    peakMultiplier: isPeakHour() ? 1.3 : 1.0,
-  });
+export async function createBooking(riderId: string, input: any) {
+  const distanceKm = input.distanceKm || DEFAULT_DISTANCE_KM;
+
+  // Calculate fare based on fuel price (from admin settings)
+  const { calculateFareFromFuel, getSettingNumber } = await import("../../modules/admin/settings.service.js");
+  const fuelFare = await calculateFareFromFuel(distanceKm, input.rideType);
+
+  const suggestedFare = fuelFare.fare;
+  const estimatedDurationMins = Math.max(5, Math.round(distanceKm * 2));
 
   const [booking] = await db
     .insert(schema.bookings)
@@ -35,18 +38,25 @@ export async function createBooking(riderId: string, input: CreateBookingInput) 
       rideType: input.rideType,
       pickup: input.pickup,
       destination: input.destination,
-      suggestedFare: fare.suggestedFare,
-      estimatedDistanceKm: DEFAULT_DISTANCE_KM.toString(),
-      estimatedDurationMins: 15,
-      status: "finding",
+      suggestedFare,
+      negotiatedFare: input.riderOffer || null,
+      estimatedDistanceKm: distanceKm.toString(),
+      estimatedDurationMins,
+      status: input.riderOffer ? "negotiating" : "finding",
     })
     .returning();
 
+  const platformFeePercent = await getSettingNumber("platform_fee_percent");
+
   return {
     ...booking,
-    suggestedFare: fare.suggestedFare,
-    lowFare: fare.lowFare,
-    highFare: fare.highFare,
+    suggestedFare,
+    lowFare: Math.round(suggestedFare * 0.7),
+    highFare: Math.round(suggestedFare * 1.3),
+    fuelPrice: fuelFare.fuelPrice,
+    distanceKm,
+    estimatedDurationMins,
+    platformFeePercent,
   };
 }
 
@@ -257,18 +267,40 @@ export async function completeBooking(bookingId: string, userId: string) {
       });
     }
 
-    // 3. Mark driver available + increment trips
+    // 3. Platform fee + credit driver wallet
     if (booking.driverId) {
-      await tx
-        .update(schema.drivers)
-        .set({
-          isAvailable: true,
-          totalTrips: booking.driverId
-            ? (await tx.select({ t: schema.drivers.totalTrips }).from(schema.drivers).where(eq(schema.drivers.id, booking.driverId)).limit(1))[0].t + 1
-            : 0,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.drivers.id, booking.driverId));
+      const { getSettingNumber } = await import("../../modules/admin/settings.service.js");
+      const platformFeePercent = await getSettingNumber("platform_fee_percent");
+      const platformFee = Math.round(fare * (platformFeePercent / 100));
+      const driverEarning = fare - platformFee;
+
+      // Find driver's user account and wallet
+      const [driver] = await tx.select().from(schema.drivers).where(eq(schema.drivers.id, booking.driverId)).limit(1);
+      if (driver?.userId) {
+        const [driverWallet] = await tx.select().from(schema.wallets).where(eq(schema.wallets.userId, driver.userId)).limit(1);
+        if (driverWallet) {
+          // Credit driver wallet (minus platform fee)
+          await tx.update(schema.wallets)
+            .set({ balance: driverWallet.balance + driverEarning, updatedAt: new Date() })
+            .where(eq(schema.wallets.id, driverWallet.id));
+
+          await tx.insert(schema.transactions).values({
+            walletId: driverWallet.id,
+            userId: driver.userId,
+            type: "credit",
+            amount: driverEarning,
+            description: `Ride earning: ${booking.pickup} → ${booking.destination} (₦${platformFee} platform fee)`,
+            bookingId,
+          });
+        }
+      }
+
+      // Mark driver available + increment trips
+      await tx.update(schema.drivers).set({
+        isAvailable: true,
+        totalTrips: driver ? driver.totalTrips + 1 : 0,
+        updatedAt: new Date(),
+      }).where(eq(schema.drivers.id, booking.driverId));
     }
 
     // 4. Create notification

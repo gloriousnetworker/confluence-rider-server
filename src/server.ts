@@ -95,6 +95,21 @@ export async function createApp() {
     return { status: "ok", timestamp: new Date().toISOString() };
   });
 
+  // Public settings (fuel price, etc.)
+  app.get("/api/settings/public", async () => {
+    const { getSetting } = await import("./modules/admin/settings.service.js");
+    return {
+      success: true,
+      data: {
+        fuelPricePerLitre: parseInt(await getSetting("fuel_price_per_litre")),
+        platformFeePercent: parseInt(await getSetting("platform_fee_percent")),
+        minFareKeke: parseInt(await getSetting("min_fare_keke")),
+        minFareCab: parseInt(await getSetting("min_fare_cab")),
+        minFareBike: parseInt(await getSetting("min_fare_bike")),
+      },
+    };
+  });
+
   // API routes
   await app.register(
     async (api) => {

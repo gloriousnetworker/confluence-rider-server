@@ -22,3 +22,4 @@ export * from "./shared-rides.js";
 export * from "./shuttles.js";
 export * from "./chat.js";
 export * from "./delivery.js";
+export * from "./settings.js";

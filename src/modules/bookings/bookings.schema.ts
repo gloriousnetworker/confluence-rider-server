@@ -4,6 +4,8 @@ export const createBookingSchema = z.object({
   rideType: z.enum(["bike", "keke", "cab", "shared", "intercity", "campus"]),
   pickup: z.string().min(1, "Pickup location is required").max(255),
   destination: z.string().min(1, "Destination is required").max(255),
+  distanceKm: z.number().positive().optional(), // from frontend map calculation
+  riderOffer: z.number().int().positive().optional(), // rider's manual price offer
 });
 
 export const bookingParamsSchema = z.object({
