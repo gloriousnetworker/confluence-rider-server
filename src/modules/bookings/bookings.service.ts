@@ -120,34 +120,20 @@ export async function getAvailableDrivers(bookingId: string, userId: string) {
   if (!booking) throw new AppError(404, "NOT_FOUND", "Booking not found");
   if (booking.riderId !== userId) throw new AppError(403, "FORBIDDEN", "Access denied");
 
-  const vehicleTypes = RIDE_TO_VEHICLE[booking.rideType as RideType] || ["car"];
+  // Use AI Dispatch to score and rank drivers
+  const { dispatchDrivers } = await import("../../services/dispatch.js");
+  const scoredDrivers = await dispatchDrivers({
+    pickup: booking.pickup,
+    destination: booking.destination,
+    rideType: booking.rideType,
+    riderId: userId,
+  });
 
-  const drivers = await db
-    .select({
-      id: schema.drivers.id,
-      name: schema.drivers.name,
-      rating: schema.drivers.rating,
-      totalTrips: schema.drivers.totalTrips,
-      zone: schema.drivers.zone,
-      vehicleType: schema.drivers.vehicleType,
-    })
-    .from(schema.drivers)
-    .where(
-      and(
-        eq(schema.drivers.isOnline, true),
-        eq(schema.drivers.isAvailable, true),
-        eq(schema.drivers.isVerified, true)
-      )
-    );
-
-  // Filter by vehicle type in JS (drizzle doesn't have easy IN for enums)
-  const filtered = drivers.filter((d) => vehicleTypes.includes(d.vehicleType));
-
-  // Simulate counter-offers
+  // Add counter-offers based on negotiated fare
   const baseFare = booking.negotiatedFare || booking.suggestedFare;
-  return filtered.map((d) => ({
+  return scoredDrivers.map((d) => ({
     ...d,
-    counterFare: baseFare + Math.floor(Math.random() * 150 - 50),
+    counterFare: baseFare + Math.floor(Math.random() * 100 - 30),
   }));
 }
 

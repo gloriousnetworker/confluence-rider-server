@@ -91,4 +91,13 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
     const data = await adminService.deletePromo(request.params.id);
     return successResponse(data);
   });
+
+  // ─── AI Dispatch ───
+  typedApp.get("/dispatch/heatmap", {
+    schema: { tags: ["Admin"], summary: "Get demand heatmap (last 24h)" },
+  }, async () => {
+    const { getDemandHeatmap } = await import("../../services/dispatch.js");
+    const data = await getDemandHeatmap();
+    return successResponse(data);
+  });
 };

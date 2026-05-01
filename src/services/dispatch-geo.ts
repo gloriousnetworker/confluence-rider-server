@@ -1,0 +1,20 @@
+// Kogi State landmark coordinates for dispatch proximity calculation
+export const LANDMARK_COORDS: Record<string, [number, number]> = {
+  "GTBank Roundabout": [7.7969, 6.7433],
+  "Nataco Junction": [7.7885, 6.7390],
+  "Ganaja Junction": [7.7750, 6.7320],
+  "Lokongoma": [7.8100, 6.7500],
+  "Felele": [7.8050, 6.7350],
+  "Crusher Junction": [7.5511, 6.2356],
+  "Kogi State University": [7.4889, 7.0100],
+  "Federal Polytechnic Idah": [7.1114, 6.7372],
+  "Kabba Main Market": [7.8272, 6.0736],
+  "Mount Patti": [7.8050, 6.7450],
+  "Confluence Beach": [7.7980, 6.7410],
+  "Lokoja Central": [7.7969, 6.7433],
+  "Ganaja": [7.7750, 6.7320],
+  "Okene": [7.5511, 6.2356],
+  "Anyigba": [7.4889, 7.0100],
+  "Idah": [7.1114, 6.7372],
+  "Kabba": [7.8272, 6.0736],
+};
