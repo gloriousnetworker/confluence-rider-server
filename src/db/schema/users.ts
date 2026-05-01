@@ -36,6 +36,8 @@ export const users = pgTable("users", {
   memberStatus: memberStatusEnum("member_status").default("bronze").notNull(),
   language: languagePrefEnum("language").default("english").notNull(),
   avatarUrl: varchar("avatar_url", { length: 500 }),
+  dateOfBirth: varchar("date_of_birth", { length: 10 }), // "YYYY-MM-DD"
+  profileLevel: varchar("profile_level", { length: 10 }).default("incomplete").notNull(), // "incomplete", "level1", "level2"
   isPhoneVerified: boolean("is_phone_verified").default(false).notNull(),
   is2faEnabled: boolean("is_2fa_enabled").default(false).notNull(),
   isSuspended: boolean("is_suspended").default(false).notNull(),

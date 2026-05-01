@@ -5,6 +5,7 @@ export const updateProfileSchema = z.object({
   email: z.string().email().optional(),
   language: z.enum(["english", "ebira", "igala", "yoruba"]).optional(),
   avatarUrl: z.string().url().max(500).optional(),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Format: YYYY-MM-DD").optional(),
 });
 
 export const createSavedPlaceSchema = z.object({

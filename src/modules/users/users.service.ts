@@ -15,6 +15,8 @@ export async function getProfile(userId: string) {
       memberStatus: schema.users.memberStatus,
       language: schema.users.language,
       avatarUrl: schema.users.avatarUrl,
+      dateOfBirth: schema.users.dateOfBirth,
+      profileLevel: schema.users.profileLevel,
       isPhoneVerified: schema.users.isPhoneVerified,
       is2faEnabled: schema.users.is2faEnabled,
       createdAt: schema.users.createdAt,
@@ -43,9 +45,17 @@ export async function updateProfile(userId: string, input: UpdateProfileInput) {
     }
   }
 
+  // Calculate profile level after update
+  const [currentUser] = await db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+  const merged = { ...currentUser, ...input };
+  let profileLevel = "incomplete";
+  if (merged.name && merged.avatarUrl && (merged as any).dateOfBirth) {
+    profileLevel = "level1"; // Level 1: name + photo + DOB
+  }
+
   const [updated] = await db
     .update(schema.users)
-    .set({ ...input, updatedAt: new Date() })
+    .set({ ...input, profileLevel, updatedAt: new Date() })
     .where(eq(schema.users.id, userId))
     .returning({
       id: schema.users.id,
